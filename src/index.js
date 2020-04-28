@@ -43,7 +43,7 @@ window.onload = function() {
         d.reset();
     });
 
-    shape.add(d.params, 'n_dots', 100, 50000).step(1).onFinishChange((value) => {
+    shape.add(d.params, 'n_dots', 100, 100000).step(1).onFinishChange((value) => {
         d.params.n_dots = value;
         d.reset();
     });
@@ -77,6 +77,12 @@ window.onload = function() {
 
     gui.add(d, 'undo').name('Undo last vertex');
     gui.add(d, 'clear').name('Clear');
+
+    gui.add(d.params, 'optimizeForPlot').onFinishChange((value) => {
+        d.params.optimizeForPlot = value;
+        d.reset();
+    });
+
     gui.add(d, 'export_svg').name('Export SVG');
     gui.add(d, 'export_png').name('Export PNG');
 }

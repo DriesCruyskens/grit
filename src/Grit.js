@@ -22,8 +22,11 @@ export default class Grit {
             extra_grit: false,
             allow_dot_overlap: false,
             overlap_dist: .6,
-            dot_color: "#e7ebc5",
-            background_color: "#202020",
+            //dot_color: "#e7ebc5",
+            //background_color: "#202020",
+            dot_color: "#000",
+            backgroun_color: "#DDD",
+            optimizeForPlot: true,
         }
 
         Number.prototype.map = function (in_min, in_max, out_min, out_max) {
@@ -200,57 +203,60 @@ export default class Grit {
         this.background.remove()
         let svg = paper.project.exportSVG({asString: true});
 
-        const parsed = parse(svg);
+        if (this.params.optimizeForPlot) {
+            
+            const parsed = parse(svg);
 
-        // only keep circles
-        let circles = parsed.children[0].children[0].children.filter(e => {
-            return e.tagName == "circle";
-        })
+            // only keep circles
+            let circles = parsed.children[0].children[0].children.filter(e => {
+                return e.tagName == "circle";
+            })
 
-        let p1, p2, dist
-        circles = circles.sort((e1, e2) => {
-            p1 = e1.properties.cx * e1.properties.cy
-            p2 = e2.properties.cx * e2.properties.cy
-            dist = this.dist(e1.properties.cx, 
-                e1.properties.cy,
-                e2.properties.cx,
-                e2.properties.cy)
-            if (p1 > p2) {
-                return 1
-            }
-            if (p1 < p2) {
-                return -1
-            }
-            return 0
-        })
+            let p1, p2, dist
+            circles = circles.sort((e1, e2) => {
+                p1 = e1.properties.cx * e1.properties.cy
+                p2 = e2.properties.cx * e2.properties.cy
+                dist = this.dist(e1.properties.cx, 
+                    e1.properties.cy,
+                    e2.properties.cx,
+                    e2.properties.cy)
+                if (p1 > p2) {
+                    return 1
+                }
+                if (p1 < p2) {
+                    return -1
+                }
+                return 0
+            })
 
-        let sorted = []
-        let closest = {
-            i: 0,
-            dist: 100000,
-        }
-
-        sorted.push(...circles.splice(0, 1)) // take first and put in sorted
-
-        const l = circles.length
-        for (let i = 0; i < l; i++) {
+            let sorted = []
             let closest = {
                 i: 0,
                 dist: 100000,
             }
-            // search remaining circles for closest point and move it to sorted
-            circles.forEach((c, j) => {
-                dist = this.dist(sorted[i].properties.cx,
-                    sorted[i].properties.cy,
-                    c.properties.cx,
-                    c.properties.cy)
-                closest = dist < closest.dist ? {i: j, dist:dist} : closest;
-            })
-            sorted.push(...circles.splice(closest.i, 1))
-        }
 
-        parsed.children[0].children[0].children = sorted
-        svg = toHtml(parsed)
+            sorted.push(...circles.splice(0, 1)) // take first and put in sorted
+
+            const l = circles.length
+            for (let i = 0; i < l; i++) {
+                let closest = {
+                    i: 0,
+                    dist: 100000,
+                }
+                // search remaining circles for closest point and move it to sorted
+                circles.forEach((c, j) => {
+                    dist = this.dist(sorted[i].properties.cx,
+                        sorted[i].properties.cy,
+                        c.properties.cx,
+                        c.properties.cy)
+                    closest = dist < closest.dist ? {i: j, dist:dist} : closest;
+                })
+                sorted.push(...circles.splice(closest.i, 1))
+            }
+
+            parsed.children[0].children[0].children = sorted
+            svg = toHtml(parsed)
+        }
 
         let blob = new Blob([svg], {type: "image/svg+xml;charset=utf-8"});
         saveAs(blob, 'grit' + JSON.stringify(this.params) + '.svg');
@@ -260,6 +266,6 @@ export default class Grit {
         let image = this.canvas.toDataURL();
         console.log(image)
         var blob = new Blob([image], {type: "image/png"});
-        saveAs(image, 'superformula.png');
+        saveAs(image, JSON.stringify(this.params) + 'blade.png');
     }
 }
